@@ -1,0 +1,131 @@
+:root {
+  --bg:#0f1115;
+  --card:#151a22;
+  --text:#e8ecf3;
+  --muted:#97a3b6;
+  --border:#263044;
+  --accent:#7c5cff;
+  --danger:#ff5573;
+  --radius:16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  color: var(--text);
+  background: radial-gradient(900px 500px at 20% -10%, rgba(124, 92, 255, 0.25), transparent), radial-gradient(900px 500px at 90% 10%, rgba(43, 212, 189, 0.15), transparent), var(--bg);
+}
+
+.page {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.card {
+  background: rgba(21, 26, 34, 0.92);
+  border: 1px solid rgba(38, 48, 68, 0.8);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.auth {
+  width: min(460px, 94vw);
+}
+
+.brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.brand__logo {
+  font-size: 28px;
+}
+
+.brand__name {
+  margin: 0;
+  font-size: 26px;
+  letter-spacing: 0.4px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 12px;
+}
+
+.form {
+  display: grid;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+input {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(38, 48, 68, 0.9);
+  background: rgba(10, 12, 16, 0.55);
+  color: var(--text);
+  outline: none;
+}
+
+input:focus {
+  border-color: rgba(124, 92, 255, 0.9);
+}
+
+.btn {
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(38, 48, 68, 0.9);
+  background: rgba(21, 26, 34, 0.7);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.btn--primary {
+  background: linear-gradient(180deg, rgba(124, 92, 255, 0.95), rgba(124, 92, 255, 0.65));
+  border-color: rgba(124, 92, 255, 0.9);
+}
+
+.alert {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 85, 115, 0.8);
+  color: #ffd7de;
+  background: rgba(255, 85, 115, 0.08);
+}
+
+.brand__img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  margin-right: 8px;
+}
+
+/*# sourceMappingURL=styles.css.map */
