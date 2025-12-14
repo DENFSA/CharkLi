@@ -13,15 +13,21 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
     "@types/node": "^25.0.1",
+    "bcrypt": "^6.0.0",
+    "better-sqlite3": "^12.5.0",
     "concurrently": "^9.2.1",
+    "cookie-parser": "^1.4.7",
     "express": "^5.2.1",
     "nodemon": "^3.1.11",
     "sass": "^1.96.0",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/better-sqlite3": "^7.6.13",
     "ts-node": "^10.9.2"
   }
 }

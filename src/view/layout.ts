@@ -1,4 +1,11 @@
-export function layout(opts: { title: string; body: string }) {
+// CharkLi/src/view/layout.ts
+
+// ОНОВЛЕНО: Тепер bodyClass є опціональним параметром
+export function layout(opts: { title: string; body: string; bodyClass?: string }) { 
+  
+  // Додаємо логіку використання bodyClass, якщо він переданий
+  const bodyClass = opts.bodyClass || "auth-page"; 
+
   return `<!doctype html>
 <html lang="uk">
 <head>
@@ -7,7 +14,7 @@ export function layout(opts: { title: string; body: string }) {
   <title>${escapeHtml(opts.title)}</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
-<body class="auth-page">
+<body class="${bodyClass}">
   <main class="page">
     ${opts.body}
   </main>
