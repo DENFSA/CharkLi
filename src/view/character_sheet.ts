@@ -58,7 +58,7 @@ interface CharacterData {
     weapons_json: string;
     appearance_json: string;
     
-    image_url: string;
+    image_url: string; // URL портрета
 }
 
 interface Proficiencies {
@@ -67,12 +67,13 @@ interface Proficiencies {
     other: string[];
 }
 
-// >>> НОВІ ІНТЕРФЕЙСИ ДЛЯ СТРУКТУРОВАНИХ ДАНИХ <<<
+type AttackScore = 'str' | 'dex';
+
 interface Weapon {
     name: string;
     damage: string;
     type: string;
-    score: AbilityScore; // Базова характеристика для атаки
+    score: AttackScore; // Базова характеристика для атаки
     proficient: boolean; // Чи володіє персонаж
 }
 
@@ -80,6 +81,17 @@ interface Inventory {
     items: string[];
     capital: Record<string, number>; 
 }
+
+interface Feature {
+    name: string;
+    description: string;
+}
+
+interface SpellList {
+    slots: Record<string, number>; // { level1: 3, level2: 2 }
+    list: string[]; // Просто список заклинань
+}
+
 
 // =======================================================
 // HELPER FUNCTIONS
@@ -174,11 +186,39 @@ export function renderCharacterSheet(char: CharacterData) {
     
     // !!! Парсинг JSON-даних !!!
     const proficiencies: Proficiencies = JSON.parse(char.proficiencies_json || '{"skills": [], "saves": [], "other": []}');
-    // Встановлюємо default, якщо дані порожні
-    const weapons: Weapon[] = JSON.parse(char.weapons_json || '[{"name":"Longsword", "damage":"1d8", "type":"slashing", "score":"str", "proficient": true}]');
-    const inventory: Inventory = JSON.parse(char.inventory_json || '{"items": ["Chain Mail", "Shield"], "capital": {"gp": 10, "sp": 0, "cp": 0}}');
-    const appearance: Record<string, string> = JSON.parse(char.appearance_json || '{}');
+    // ФІКС: Забезпечуємо, що weapons завжди масив
+    const weapons: Weapon[] = JSON.parse(char.weapons_json || '[]'); 
+    const inventory: Inventory = JSON.parse(char.inventory_json || '{"items": [], "capital": {"gp": 0, "sp": 0, "cp": 0, "pp": 0, "ep": 0}}');
     
+    // >>> ПАРСИНГ ОСОБЛИВОСТЕЙ, ЗАКЛИНАНЬ, ЗОВНІШНОСТІ ТА ЗОБРАЖЕННЯ <<<
+    let features: Feature[] = [];
+    try {
+        features = JSON.parse(char.features_json || '[]'); 
+        if (!Array.isArray(features)) features = []; // Додаткова перевірка
+    } catch (e) { features = []; }
+
+    let spellList: SpellList = { slots: {}, list: [] };
+    try {
+        spellList = JSON.parse(char.spells_json || '{"slots": {}, "list": []}');
+        if (!Array.isArray(spellList.list)) spellList.list = []; 
+    } catch (e) { spellList = { slots: {}, list: [] }; }
+    
+    let appearance: Record<string, string> = {};
+    try {
+        appearance = JSON.parse(char.appearance_json || '{}');
+    } catch (e) { appearance = {}; }
+
+    const defaultImageUrl = '/assets/default_hero.jpg';
+    const imageUrl = char.image_url || defaultImageUrl;
+    
+    // >>> ПЕРЕТВОРЕННЯ ДЛЯ TEXTAREA (читабельний формат) <<<
+    const featuresText = features.map(f => `[${f.name}]: ${f.description}`).join('\n\n');
+    const spellListText = spellList.list.join('\n');
+    const appearanceText = Object.entries(appearance)
+        .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`)
+        .join('\n');
+
+
     // Розрахунок похідних
     const initiative = formatModifier(calculateInitiative(char.dex));
     const passivePerception = calculatePassivePerception(
@@ -201,7 +241,6 @@ export function renderCharacterSheet(char: CharacterData) {
 
     // Рендеринг Зброї (Таблиця)
     const weaponsHtml = weapons.map((w, index) => {
-        // Визначаємо, яка характеристика сильніша (STR чи DEX)
         const attackScore = w.score || (abilityScores.str >= abilityScores.dex ? 'str' : 'dex');
         const attackValue = abilityScores[attackScore];
         
@@ -224,7 +263,7 @@ export function renderCharacterSheet(char: CharacterData) {
         `;
     }).join('');
 
-    // Рендеринг Капіталу (4 поля)
+    // Рендеринг Капіталу (5 полів)
     const moneyOrder: ('gp' | 'sp' | 'cp' | 'pp' | 'ep')[] = ['gp', 'sp', 'cp', 'pp', 'ep'];
     const capitalHtml = moneyOrder.map(key => {
         const value = inventory.capital[key] || 0;
@@ -243,6 +282,15 @@ export function renderCharacterSheet(char: CharacterData) {
     const initialSkills = proficiencies.skills.join(',');
     const initialSaves = proficiencies.saves.join(',');
 
+    // HTML для слотів заклинань
+    const spellSlotsHtml = Object.entries(spellList.slots)
+        .map(([level, count]) => `
+            <div class="spell-slot-item">
+                <label>Lvl ${level.replace('level', '')}</label>
+                <input type="number" data-spell-slot-lvl="${level}" value="${count}" />
+            </div>
+        `).join('');
+
 
     return layout({
         title: `${char.name} — Лист персонажа`,
@@ -258,32 +306,56 @@ export function renderCharacterSheet(char: CharacterData) {
         <input type="hidden" id="proficient-saves" name="proficient_saves" value="${initialSaves}">
         <input type="hidden" name="weapons_json" id="weapons-json-input" value="${escapeHtml(JSON.stringify(weapons))}">
         <input type="hidden" name="inventory_json" id="inventory-json-input" value="${escapeHtml(JSON.stringify(inventory))}">
+        <input type="hidden" name="features_json" id="features-json-input" value="${escapeHtml(JSON.stringify(features))}">
+        <input type="hidden" name="spells_json" id="spells-json-input" value="${escapeHtml(JSON.stringify(spellList))}">
+        <input type="hidden" name="appearance_json" id="appearance-json-input" value="${escapeHtml(JSON.stringify(appearance))}">
+        <input type="hidden" name="image_url" id="image-url-input" value="${escapeHtml(imageUrl)}" />
+
 
         <header class="sheet-header">
-            <div class="header__name">
-                <input class="name-field input--name" name="name" value="${escapeHtml(char.name)}" />
-                <label>Ім'я персонажа</label>
-            </div>
             
-            <div class="header__details">
-                <div class="detail-group">
-                    <span class="detail-label">Клас & Рівень</span>
-                    <div class="detail-value">
-                        <input class="input--inline" name="dnd_class" value="${escapeHtml(char.dnd_class)}" />
-                        <input class="input--inline input--level" type="number" name="level" value="${char.level}" />
+            <div class="header__image-container">
+                <div class="header__image">
+                    <img src="${imageUrl}" alt="${escapeHtml(char.name)} Portrait" id="character-portrait" />
+                    
+                    <button type="button" class="btn--edit-image" id="toggle-image-edit">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="white">
+                            <path d="M12 9a3 3 0 100 6 3 3 0 000-6z"/><path d="M19 2a3 3 0 013 3v14a3 3 0 01-3 3H5a3 3 0 01-3-3V5a3 3 0 013-3h14zm-1 2H6a1 1 0 00-1 1v14a1 1 0 001 1h12a1 1 0 001-1V5a1 1 0 00-1-1zM5 19l4-4 4 4z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="image-edit-controls hidden" id="image-edit-controls">
+                    <input type="text" id="image-url-editor" value="${escapeHtml(imageUrl)}" placeholder="Вставити URL зображення" />
+                    <button type="button" id="save-image-url">Зберегти</button>
+                </div>
+            </div>
+
+            <div class="header__main-info">
+                <div class="header__name">
+                    <input class="name-field input--name" name="name" value="${escapeHtml(char.name)}" />
+                    <label class="name-label">Ім'я персонажа</label> 
+                </div>
+                
+                <div class="header__details">
+                    <div class="detail-group">
+                        <span class="detail-label">Клас & Рівень</span>
+                        <div class="detail-value">
+                            <input class="input--inline" name="dnd_class" value="${escapeHtml(char.dnd_class)}" />
+                            <input class="input--inline input--level" type="number" name="level" value="${char.level}" />
+                        </div>
                     </div>
-                </div>
-                <div class="detail-group">
-                    <span class="detail-label">Раса</span>
-                    <input class="input--inline" name="race" value="${escapeHtml(char.race)}" />
-                </div>
-                <div class="detail-group">
-                    <span class="detail-label">Передісторія</span>
-                    <input class="input--inline" name="background" value="${escapeHtml(char.background)}" />
-                </div>
-                <div class="detail-group">
-                    <span class="detail-label">Світогляд</span>
-                    <input class="input--inline" name="alignment" value="${escapeHtml(char.alignment)}" />
+                    <div class="detail-group">
+                        <span class="detail-label">Раса</span>
+                        <input class="input--inline" name="race" value="${escapeHtml(char.race)}" />
+                    </div>
+                    <div class="detail-group">
+                        <span class="detail-label">Передісторія</span>
+                        <input class="input--inline" name="background" value="${escapeHtml(char.background)}" />
+                    </div>
+                    <div class="detail-group">
+                        <span class="detail-label">Світогляд</span>
+                        <input class="input--inline" name="alignment" value="${escapeHtml(char.alignment)}" />
+                    </div>
                 </div>
             </div>
         </header>
@@ -370,10 +442,14 @@ export function renderCharacterSheet(char: CharacterData) {
                 <textarea class="textarea--short" name="proficiencies_other" placeholder="Список володінь, набори інструментів">${escapeHtml(otherProficienciesText)}</textarea>
                 
                 <h2 class="h2--compact">Особливості та Вміння</h2>
-                <textarea class="textarea--tall" name="features_json" placeholder="JSON особливостей">${escapeHtml(char.features_json)}</textarea>
+                <textarea class="textarea--tall" data-features-input name="features_text" placeholder="Формат: [Назва]: Опис. Кожна особливість з нового рядка.">${escapeHtml(featuresText)}</textarea>
                 
                 <h2 class="h2--compact">Заклинання</h2>
-                <textarea class="textarea--tall" name="spells_json" placeholder="JSON заклинань">${escapeHtml(char.spells_json)}</textarea>
+                <div class="spell-slots-block">
+                    ${spellSlotsHtml}
+                </div>
+                <label class="small muted">Список заклинань (по одному на рядок):</label>
+                <textarea class="textarea--tall" data-spells-list-input name="spells_list_text" placeholder="Fireball\nCure Wounds">${escapeHtml(spellListText)}</textarea>
             </section>
 
             <section class="column column--right">
@@ -404,7 +480,7 @@ export function renderCharacterSheet(char: CharacterData) {
 
                 
                 <h2 class="h2--compact">Зовнішність</h2>
-                <textarea class="textarea--tall" name="appearance_json" placeholder="Зріст, вага, колір очей і т.д. (JSON)">${escapeHtml(char.appearance_json)}</textarea>
+                <textarea class="textarea--tall" data-appearance-input name="appearance_text" placeholder="Зріст: 180см\nВага: 85кг\nКолір очей: Синій">${escapeHtml(appearanceText)}</textarea>
 
                 <label class="small muted">Історія персонажа</label>
                 <textarea class="textarea--tall" name="history_notes">${escapeHtml(char.history_notes)}</textarea>

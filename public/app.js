@@ -53,7 +53,29 @@ function calculatePassivePerception(wisScore, level, isProficient) {
 // ====================================================
 
 document.addEventListener("DOMContentLoaded", () => {
-    // ... (Login/Register Logic remains) ...
+    // ----------------------------------------------------
+    // Логіка перемикання Вхід/Реєстрація (існуюча логіка)
+    // ----------------------------------------------------
+    const login = document.getElementById("loginForm");
+    const register = document.getElementById("registerForm");
+
+    if (login && register) {
+        document.querySelectorAll("[data-switch]").forEach(btn => {
+            btn.addEventListener("click", () => {
+                if (btn.dataset.switch === "register") {
+                    login.classList.add("hidden");
+                    register.classList.remove("hidden");
+                } else {
+                    register.classList.add("hidden");
+                    login.classList.remove("hidden");
+                }
+            });
+        });
+    }
+
+    // ----------------------------------------------------
+    // Логіка Листа Персонажа
+    // ----------------------------------------------------
 
     const characterSheet = document.querySelector('.character-sheet');
     if (characterSheet) {
@@ -67,6 +89,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const savesHiddenInput = document.getElementById('proficient-saves');
         const weaponsJsonInput = document.getElementById('weapons-json-input');
         const inventoryJsonInput = document.getElementById('inventory-json-input');
+        const featuresJsonInput = document.getElementById('features-json-input');
+        const spellsJsonInput = document.getElementById('spells-json-input'); 
+        const appearanceJsonInput = document.getElementById('appearance-json-input'); 
+        const imageUrlInput = document.getElementById('image-url-input');
+
 
         let charLevel = parseInt(levelInput?.value) || 1;
         
@@ -175,7 +202,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 const profInput = row.querySelector('input[data-weapon-field="proficient"]');
 
                 if (nameInput?.value.trim() !== "") {
-                     // Урон та тип в одному полі - для спрощення
                      weaponsArray.push({
                          name: nameInput.value.trim(),
                          damage: damageInput.value.trim(),
@@ -192,7 +218,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (weaponRowsContainer) {
             weaponRowsContainer.addEventListener('input', compileWeaponsJson);
             
-            // Логіка додавання/видалення рядків (приклад)
+            // Логіка додавання/видалення рядків
             document.querySelector('.btn--add-weapon')?.addEventListener('click', () => {
                 const newIndex = document.querySelectorAll('[data-weapons-body] tr').length;
                 const newRow = `
@@ -246,12 +272,145 @@ document.addEventListener("DOMContentLoaded", () => {
             inventoryItemsTextarea.addEventListener('input', compileInventoryJson);
             moneyInputs.forEach(input => input.addEventListener('input', compileInventoryJson));
             
-            // Якщо інвентар змінюється, запускаємо перепакування
             document.querySelector('#characterSheetForm').addEventListener('submit', compileInventoryJson);
         }
+        
+        // --- Features JSON Packing ---
+        const featuresInput = document.querySelector('[data-features-input]');
+        
+        function compileFeaturesJson() {
+            if (!featuresInput || !featuresJsonInput) return;
+            
+            const lines = featuresInput.value.split('\n');
+            const newFeatures = [];
+            
+            lines.forEach(line => {
+                const trimmedLine = line.trim();
+                if (!trimmedLine) return;
+                
+                // Простий парсинг: [Назва]: Опис
+                const match = trimmedLine.match(/^\[(.*?)\]:\s*(.*)/);
+                
+                if (match) {
+                    newFeatures.push({
+                        name: match[1].trim(),
+                        description: match[2].trim()
+                    });
+                } else {
+                    // Якщо формат не підійшов, використовуємо весь рядок як опис
+                    newFeatures.push({
+                        name: 'Опис',
+                        description: trimmedLine
+                    });
+                }
+            });
+
+            featuresJsonInput.value = JSON.stringify(newFeatures);
+        }
+
+        if (featuresInput) {
+            featuresInput.addEventListener('input', compileFeaturesJson);
+        }
+
+        // --- Spells JSON Packing ---
+        const spellsListInput = document.querySelector('[data-spells-list-input]');
+        const spellSlotsInputs = document.querySelectorAll('[data-spell-slot-lvl]');
+        
+        function compileSpellsJson() {
+            if (!spellsJsonInput || !spellsListInput) return;
+
+            const newSpellList = {
+                slots: {},
+                list: []
+            };
+
+            // Збір слотів
+            spellSlotsInputs.forEach(input => {
+                const level = input.dataset.spellSlotLvl;
+                newSpellList.slots[level] = parseInt(input.value) || 0;
+            });
+
+            // Збір списку заклинань
+            newSpellList.list = spellsListInput.value
+                .split('\n')
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+
+            spellsJsonInput.value = JSON.stringify(newSpellList);
+        }
+
+        if (spellsListInput) {
+            spellsListInput.addEventListener('input', compileSpellsJson);
+            spellSlotsInputs.forEach(input => input.addEventListener('input', compileSpellsJson));
+        }
+
+        // --- Appearance JSON Packing ---
+        const appearanceInput = document.querySelector('[data-appearance-input]');
+        
+        function compileAppearanceJson() {
+            if (!appearanceInput || !appearanceJsonInput) return;
+            
+            const lines = appearanceInput.value.split('\n');
+            const newAppearance = {};
+            
+            lines.forEach(line => {
+                const trimmedLine = line.trim();
+                if (!trimmedLine) return;
+                
+                // Парсинг: Ключ: Значення
+                const parts = trimmedLine.split(':');
+                if (parts.length >= 2) {
+                    const key = parts[0].trim().toLowerCase();
+                    const value = parts.slice(1).join(':').trim();
+                    if (key) {
+                        newAppearance[key] = value;
+                    }
+                }
+            });
+
+            appearanceJsonInput.value = JSON.stringify(newAppearance);
+        }
+
+        if (appearanceInput) {
+            appearanceInput.addEventListener('input', compileAppearanceJson);
+        }
+        
+        // --- Image URL Editing Logic ---
+        const imageToggleBtn = document.getElementById('toggle-image-edit');
+        const imageEditControls = document.getElementById('image-edit-controls');
+        const imageUrlEditor = document.getElementById('image-url-editor');
+        const saveImageUrlBtn = document.getElementById('save-image-url');
+        const characterPortrait = document.getElementById('character-portrait');
+
+        if (imageToggleBtn && imageEditControls) {
+            
+            // 1. Показати/приховати редактор
+            imageToggleBtn.addEventListener('click', () => {
+                imageEditControls.classList.toggle('hidden');
+                imageUrlEditor.focus();
+            });
+
+            // 2. Зберегти URL та оновити зображення
+            saveImageUrlBtn.addEventListener('click', () => {
+                const newUrl = imageUrlEditor.value.trim();
+                // Оновлюємо візуальне зображення
+                characterPortrait.src = newUrl || '/assets/default_hero.jpg';
+                // Оновлюємо приховане поле форми для збереження в базу
+                imageUrlInput.value = newUrl; 
+                
+                imageEditControls.classList.add('hidden');
+            });
+            
+            // 3. Оновлення URL при введенні в поле
+            imageUrlEditor.addEventListener('input', () => {
+                // Це дає миттєвий попередній перегляд
+                characterPortrait.src = imageUrlEditor.value.trim() || '/assets/default_hero.jpg'; 
+            });
+        }
+
 
         // ----------------------------------------------------
-        // ПРИВ'ЯЗКА ОСНОВНИХ ОБРОБНИКІВ
+        // ПРИВ'ЯЗКА ОСНОВНИХ ОБРОБНИКІВ та ІНІЦІАЛІЗАЦІЯ
         // ----------------------------------------------------
 
         // Обробник кліку по чекбоксу володіння
@@ -296,5 +455,8 @@ document.addEventListener("DOMContentLoaded", () => {
         updateCharacterSheet(); 
         compileWeaponsJson(); 
         compileInventoryJson();
+        compileFeaturesJson(); 
+        compileSpellsJson(); 
+        compileAppearanceJson(); 
     }
 });

@@ -185,12 +185,18 @@ app.get("/character/:id", checkAuth, (req, res) => {
     if (charId === 'new') {
         // Placeholder для форми створення
         return res.send(renderCharacterSheet({
-            // Передаємо порожні дані для форми створення
+            // Передаємо порожні, коректно типізовані дані
             id: -1, user_id: userId, name: "Новий Герой", dnd_class: "", level: 1, race: "", background: "", alignment: "N",
             str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10,
             ac: 10, speed: 30, max_hp: 10, current_hp: 10, temp_hp: 0, inspiration: 0,
             personality_traits: "", ideals: "", bonds: "", flaws: "", history_notes: "",
-            proficiencies_json: "{}", inventory_json: "{}", features_json: "{}", spells_json: "{}", weapons_json: "{}", appearance_json: "{}",
+            // !!! ФІКС: Передаємо коректні порожні масиви JSON !!!
+            proficiencies_json: '{"skills": [], "saves": [], "other": []}', 
+            inventory_json: '{"items": [], "capital": {"gp": 0, "sp": 0, "cp": 0, "pp": 0, "ep": 0}}', 
+            features_json: '[]', // Має бути порожній масив, а не об'єкт
+            spells_json: '{"slots": {}, "list": []}', 
+            weapons_json: '[]', // Має бути порожній масив, а не об'єкт
+            appearance_json: '{}',
             image_url: "",
         }));
     }
@@ -215,28 +221,21 @@ app.get("/character/:id", checkAuth, (req, res) => {
 
 app.post("/character/:id", checkAuth, (req, res) => {
     const userId = (req as any).user.id;
-    const charId = req.params.id;
+    const charId = req.params.id; // Це буде 'new' або справжній ID, але ми використовуємо req.body.id = -1 для нового
 
-    if (String(charId) !== String(req.body.id)) {
+    // Використовуємо ID з прихованого поля форми, щоб визначити, INSERT чи UPDATE
+    const formId = Number(req.body.id);
+    const isNewCharacter = formId === -1;
+
+    // Перевірка безпеки для UPDATE
+    if (!isNewCharacter && String(charId) !== String(formId)) {
         return res.status(400).send("Security Error: ID mismatch");
     }
 
     try {
-        // 1. Отримуємо існуючі JSON дані
-        const existingChar = db.prepare(`
-            SELECT proficiencies_json 
-            FROM characters 
-            WHERE id = ? AND user_id = ?
-        `).get(charId, userId) as { proficiencies_json: string } | undefined;
-
-        if (!existingChar) {
-            return res.status(404).send("Character not found or access denied.");
-        }
-
         const body = req.body;
         
-        // 2. СТВОРЕННЯ НОВОГО proficiencies_json
-        // Явно вказуємо тип 's' як string для уникнення помилки ts(7006)
+        // 1. СТВОРЕННЯ НОВОГО proficiencies_json (для INSERT та UPDATE)
         const newProficiencies: any = {
             skills: body.proficient_skills 
                 ? body.proficient_skills.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0) 
@@ -251,39 +250,75 @@ app.post("/character/:id", checkAuth, (req, res) => {
         const updatedProficienciesJson = JSON.stringify(newProficiencies);
 
 
-        // 3. Створення SQL UPDATE запиту для всіх полів
-        const updateStmt = db.prepare(`
-            UPDATE characters SET
-                name = ?, dnd_class = ?, level = ?, race = ?, background = ?, alignment = ?,
-                str = ?, dex = ?, con = ?, int = ?, wis = ?, cha = ?,
-                ac = ?, speed = ?, max_hp = ?, current_hp = ?, temp_hp = ?, inspiration = ?,
-                personality_traits = ?, ideals = ?, bonds = ?, flaws = ?, history_notes = ?,
-                weapons_json = ?, proficiencies_json = ?, features_json = ?, spells_json = ?, inventory_json = ?, appearance_json = ?
-            WHERE id = ? AND user_id = ?
-        `);
-
-        // 4. Підготовка масиву значень
-        const values = [
+        // Загальний масив значень для обох операцій
+        const baseValues = [
             body.name, body.dnd_class, Number(body.level), body.race, body.background, body.alignment,
             Number(body.str), Number(body.dex), Number(body.con), Number(body.int), Number(body.wis), Number(body.cha),
             Number(body.ac), Number(body.speed), Number(body.max_hp), Number(body.current_hp), Number(body.temp_hp), 
             body.inspiration === 'on' ? 1 : 0, 
             body.personality_traits, body.ideals, body.bonds, body.flaws, body.history_notes,
             body.weapons_json, updatedProficienciesJson, body.features_json, body.spells_json, body.inventory_json, body.appearance_json,
-            charId, userId
+            body.image_url,
         ];
 
-        updateStmt.run(...values);
+        let finalCharId = formId;
+
+        if (isNewCharacter) {
+            // >>>>>>>>>>>>>>> ВСТАВКА НОВОГО ПЕРСОНАЖА (INSERT) <<<<<<<<<<<<<<<<<
+            const insertStmt = db.prepare(`
+                INSERT INTO characters (
+                    user_id, name, dnd_class, level, race, background, alignment,
+                    str, dex, con, int, wis, cha,
+                    ac, speed, max_hp, current_hp, temp_hp, inspiration,
+                    personality_traits, ideals, bonds, flaws, history_notes,
+                    weapons_json, proficiencies_json, features_json, spells_json, inventory_json, appearance_json,
+                    image_url, created_at
+                ) VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, 
+                    ?, ?, ?, ?, ?, ?, 
+                    ?, ?, ?, ?, ?, ?, 
+                    ?, ?, ?, ?, ?, 
+                    ?, ?, ?, ?, ?, ?,
+                    ?, datetime('now')
+                )
+            `);
+            
+            const insertValues = [userId, ...baseValues];
+            const result = insertStmt.run(...insertValues);
+            finalCharId = result.lastInsertRowid as number;
+
+        } else {
+            // >>>>>>>>>>>>>>> ОНОВЛЕННЯ ІСНУЮЧОГО ПЕРСОНАЖА (UPDATE) <<<<<<<<<<<<<<<<<
+            
+            // Перевірка існування (як було раніше, але тепер не потрібна, якщо ми знаємо, що це UPDATE)
+            const exists = db.prepare(`SELECT id FROM characters WHERE id = ? AND user_id = ?`).get(formId, userId);
+            if (!exists) {
+                return res.status(404).send("Character not found or access denied.");
+            }
+
+            const updateStmt = db.prepare(`
+                UPDATE characters SET
+                    name = ?, dnd_class = ?, level = ?, race = ?, background = ?, alignment = ?,
+                    str = ?, dex = ?, con = ?, int = ?, wis = ?, cha = ?,
+                    ac = ?, speed = ?, max_hp = ?, current_hp = ?, temp_hp = ?, inspiration = ?,
+                    personality_traits = ?, ideals = ?, bonds = ?, flaws = ?, history_notes = ?,
+                    weapons_json = ?, proficiencies_json = ?, features_json = ?, spells_json = ?, inventory_json = ?, appearance_json = ?,
+                    image_url = ?
+                WHERE id = ? AND user_id = ?
+            `);
+            
+            const updateValues = [...baseValues, formId, userId];
+            updateStmt.run(...updateValues);
+        }
 
         // 5. Успішне збереження: перенаправляємо назад на лист персонажа
-        res.redirect(`/character/${charId}`);
+        res.redirect(`/character/${finalCharId}`);
 
     } catch (err) {
-        console.error("CHARACTER SAVE ERROR:", err);
-        res.redirect(`/character/${charId}?error=` + encodeURIComponent("Помилка збереження даних. Перевірте формат JSON."));
+        console.error("CHARACTER SAVE/INSERT ERROR:", err);
+        res.redirect(`/character/${charId}?error=` + encodeURIComponent("Помилка збереження даних. Перевірте формат."));
     }
 });
-
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}/login`);
