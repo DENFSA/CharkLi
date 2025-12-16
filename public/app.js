@@ -1,5 +1,3 @@
-// Chakrli/public/app.js (ФІНАЛЬНА ВЕРСІЯ)
-
 // D&D Utility Functions (Client-side calculations - Duplicated from dnd_utils.ts)
 const ABILITY_SCORES = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 const SKILLS_MAP = {

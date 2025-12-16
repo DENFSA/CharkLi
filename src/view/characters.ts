@@ -1,5 +1,3 @@
-// CharkLi/src/view/characters.ts
-
 // Тип для даних персонажа, які потрібні на сторінці-плитці
 interface CharacterCardData {
   id: number;
@@ -12,11 +10,9 @@ interface CharacterCardData {
 // Визначення опцій, які приймає функція renderCharacters
 interface RenderCharactersOpts {
   userEmail: string;
-  // >>>>>> ДОДАНО: ТЕПЕР ФУНКЦІЯ ПРИЙМАЄ МАСИВ ПЕРСОНАЖІВ
   characters: CharacterCardData[]; 
 }
 
-// Функція для екранування HTML-символів (може знадобитися)
 function escapeHtml(s: string) {
   const map: Record<string, string> = {
     "&": "&amp;",
@@ -28,7 +24,6 @@ function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (ch) => map[ch] ?? ch);
 }
 
-// Імпорт layout з CharkLi/src/view/layout.ts
 import { layout } from "./layout";
 
 function renderCharacterCard(char: CharacterCardData) {
@@ -49,7 +44,6 @@ function renderCharacterCard(char: CharacterCardData) {
 }
 
 function renderNewCharacterCard() {
-  // Кнопка для створення нового персонажа
   return `
     <a href="/character/new" class="char-card char-card--new">
       <div class="char-card__icon-container">
@@ -61,16 +55,11 @@ function renderNewCharacterCard() {
 }
 
 export function renderCharacters(opts: RenderCharactersOpts) {
-  // Збираємо картки, які прийшли з бази даних
   const characterCards = opts.characters.map(renderCharacterCard).join("");
-  
-  // Додаємо картку "Створити нового"
   const allCards = renderNewCharacterCard() + characterCards;
 
   return layout({
     title: "Мої персонажі — CharKli",
-    // Тут ми використовуємо клас page, але для сторінки персонажів його треба трохи змінити 
-    // щоб контент не був центрований вертикально, а починався зверху.
     body: `
 <section class="characters-page">
   <header class="page-header">

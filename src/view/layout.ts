@@ -1,6 +1,3 @@
-// CharkLi/src/view/layout.ts
-
-// ОНОВЛЕНО: Тепер bodyClass є опціональним параметром
 export function layout(opts: { title: string; body: string; bodyClass?: string }) { 
   
   // Додаємо логіку використання bodyClass, якщо він переданий

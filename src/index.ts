@@ -4,7 +4,6 @@ import express, { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import path from "path";
 import cookieParser from "cookie-parser";
-// >>>>>>>>>> ІМПОРТ seedNewUser
 import { db, seedNewUser } from "./db/database"; 
 import { layout } from "./view/layout";
 import { renderLogin } from "./view/login";
@@ -30,7 +29,6 @@ type User = {
   password_hash: string;
 };
 
-// Middleware для перевірки авторизації (checkAuth)
 function checkAuth(req: Request, res: Response, next: NextFunction) {
   const userId = req.signedCookies[USER_COOKIE];
 
@@ -49,7 +47,7 @@ function checkAuth(req: Request, res: Response, next: NextFunction) {
 // ====================================================================
 
 // 1. Головна сторінка: перенаправлення на вхід
-app.get("/", (_req, res) => res.redirect("/login")); // <<< ЗМІНЕНО: перенаправляємо на /login для неавторизованих
+app.get("/", (_req, res) => res.redirect("/login"));
 
 // 2. Сторінка входу (Page 1)
 app.get("/login", (req, res) => {
@@ -97,8 +95,6 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// ... (AUTH ROUTES: app.get("/"), app.get("/login"), app.post("/login"), app.post("/logout") залишаються без змін)
-
 // ---------------------- REGISTER ----------------------
 app.post("/register", async (req, res) => {
   try {
@@ -135,7 +131,6 @@ app.post("/register", async (req, res) => {
 
     const newUserId = result.lastInsertRowid as number;
 
-    // 4. >>>>>>>>>> ВИКЛИКАЄМО ДОДАВАННЯ ДЕМО-ПЕРСОНАЖА З НОВОЮ СХЕМОЮ
     seedNewUser(newUserId, email);
 
     // 5. Автоматичний вхід: встановлюємо куку
@@ -193,9 +188,9 @@ app.get("/character/:id", checkAuth, (req, res) => {
             // !!! ФІКС: Передаємо коректні порожні масиви JSON !!!
             proficiencies_json: '{"skills": [], "saves": [], "other": []}', 
             inventory_json: '{"items": [], "capital": {"gp": 0, "sp": 0, "cp": 0, "pp": 0, "ep": 0}}', 
-            features_json: '[]', // Має бути порожній масив, а не об'єкт
+            features_json: '[]', 
             spells_json: '{"slots": {}, "list": []}', 
-            weapons_json: '[]', // Має бути порожній масив, а не об'єкт
+            weapons_json: '[]', 
             appearance_json: '{}',
             image_url: "",
         }));
@@ -223,7 +218,6 @@ app.post("/character/:id", checkAuth, (req, res) => {
     const userId = (req as any).user.id;
     const charId = req.params.id; // Це буде 'new' або справжній ID, але ми використовуємо req.body.id = -1 для нового
 
-    // Використовуємо ID з прихованого поля форми, щоб визначити, INSERT чи UPDATE
     const formId = Number(req.body.id);
     const isNewCharacter = formId === -1;
 
@@ -235,7 +229,6 @@ app.post("/character/:id", checkAuth, (req, res) => {
     try {
         const body = req.body;
         
-        // 1. СТВОРЕННЯ НОВОГО proficiencies_json (для INSERT та UPDATE)
         const newProficiencies: any = {
             skills: body.proficient_skills 
                 ? body.proficient_skills.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0) 
@@ -264,7 +257,7 @@ app.post("/character/:id", checkAuth, (req, res) => {
         let finalCharId = formId;
 
         if (isNewCharacter) {
-            // >>>>>>>>>>>>>>> ВСТАВКА НОВОГО ПЕРСОНАЖА (INSERT) <<<<<<<<<<<<<<<<<
+
             const insertStmt = db.prepare(`
                 INSERT INTO characters (
                     user_id, name, dnd_class, level, race, background, alignment,
@@ -288,9 +281,7 @@ app.post("/character/:id", checkAuth, (req, res) => {
             finalCharId = result.lastInsertRowid as number;
 
         } else {
-            // >>>>>>>>>>>>>>> ОНОВЛЕННЯ ІСНУЮЧОГО ПЕРСОНАЖА (UPDATE) <<<<<<<<<<<<<<<<<
             
-            // Перевірка існування (як було раніше, але тепер не потрібна, якщо ми знаємо, що це UPDATE)
             const exists = db.prepare(`SELECT id FROM characters WHERE id = ? AND user_id = ?`).get(formId, userId);
             if (!exists) {
                 return res.status(404).send("Character not found or access denied.");
@@ -311,7 +302,6 @@ app.post("/character/:id", checkAuth, (req, res) => {
             updateStmt.run(...updateValues);
         }
 
-        // 5. Успішне збереження: перенаправляємо назад на лист персонажа
         res.redirect(`/character/${finalCharId}`);
 
     } catch (err) {
