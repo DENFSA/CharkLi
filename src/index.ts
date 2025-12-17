@@ -11,7 +11,7 @@ import { renderCharacters } from "./view/characters";
 import { renderCharacterSheet } from "./view/character_sheet";
 const USER_COOKIE = "dnd_user_id"; 
 const HASH_SALT_ROUNDS = 10;
-const SESSION_SECRET = "VERY_SECURE_SECRET_KEY"; // У реальному проекті це має бути у .env
+const SESSION_SECRET = "VERY_SECURE_SECRET_KEY";
 
 const app = express();
 const port = 3000;
@@ -77,12 +77,10 @@ app.post("/login", async (req, res) => {
     const ok = await bcrypt.compare(password, user.password_hash);
 
     if (ok) {
-      // Успішний вхід: встановлюємо підписану куку з ID користувача
       res.cookie(USER_COOKIE, user.id, {
         signed: true,
-        httpOnly: true, // Запобігає доступу з JS
-        maxAge: 1000 * 60 * 60 * 24 * 7, // 1 тиждень
-        // secure: process.env.NODE_ENV === "production"
+        httpOnly: true,
+        maxAge: 1000 * 60 * 60 * 24 * 7
       });
       return res.redirect("/characters");
     }
@@ -121,10 +119,10 @@ app.post("/register", async (req, res) => {
         return res.redirect("/login?error=" + encodeURIComponent("Користувач з таким email вже існує."));
     }
 
-    // 2. Хешування пароля
+    // Хешування пароля
     const password_hash = await bcrypt.hash(password, HASH_SALT_ROUNDS);
 
-    // 3. Збереження в базу даних
+    // Збереження в базу даних
     const result = db
         .prepare("INSERT INTO users (email, password_hash, created_at) VALUES (?, ?, datetime('now'))")
         .run(email, password_hash);

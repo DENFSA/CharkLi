@@ -105,7 +105,6 @@ export function seedNewUser(userId: number, email: string) {
         flaws: "Маю сильну схильність до надмірного вживання алкоголю.",
         history_notes: "Був призваний до армії в юному віці, де навчився дисципліні та мистецтву війни.",
         
-        // Комплексні дані (JSON заглушки)
         proficiencies_json: JSON.stringify({
             skills: ["Acrobatics", "Athletics"], // Владання навичками
             saves: ["Strength", "Constitution"], // Владання спасбросками
@@ -116,7 +115,7 @@ export function seedNewUser(userId: number, email: string) {
             capital: { cp: 50, sp: 0, ep: 0, gp: 10, pp: 0 }
         }),
         features_json: JSON.stringify([{ name: "Бойовий Стиль", description: "Оборона" }, { name: "Другий Подих", description: "Реакцією відновлює 1к10 + Рівень ХП." }]),
-        spells_json: JSON.stringify({ slots: {}, list: [] }), // Порожній для Fighter
+        spells_json: JSON.stringify({ slots: {}, list: [] }), 
         weapons_json: JSON.stringify([{ name: "Longsword", damage: "1d8", type: "slashing" }]),
         appearance_json: JSON.stringify({ height: "180см", weight: "85кг", eyes: "Сині", hair: "Коричневе", age: 25, skin: "Світла" }),
 

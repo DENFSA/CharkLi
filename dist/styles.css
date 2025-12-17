@@ -123,7 +123,6 @@ input:focus, textarea:focus {
   border-color: rgba(124, 92, 255, 0.9);
 }
 
-/* Специфічне стилізація чекбоксів */
 input[type=checkbox] {
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -158,7 +157,6 @@ input[type=checkbox]:checked::before {
   transform: scale(1);
 }
 
-/* Кінець стилізації чекбоксів */
 .btn, .weapons-table .btn--add-weapon {
   padding: 11px 14px;
   border-radius: 4px;
@@ -170,7 +168,6 @@ input[type=checkbox]:checked::before {
 }
 
 .btn--primary {
-  /* Фіксований стиль для кнопки "Увійти" */
   background: linear-gradient(180deg, rgba(124, 92, 255, 0.95), rgba(124, 92, 255, 0.65));
   border-color: rgba(124, 92, 255, 0.9);
 }
@@ -212,7 +209,6 @@ input[type=checkbox]:checked::before {
 }
 
 .switch button {
-  /* Стилізація кнопки "Зареєструватися" */
   background: none;
   border: none;
   color: var(--accent);
@@ -366,10 +362,9 @@ input[type=number]::-webkit-outer-spin-button {
   margin: 0;
 }
 
-/* Явний білий/світлий колір для тексту в полях вводу */
 input, textarea {
   color: var(--text);
-  border-radius: 4px; /* Компактніші радіуси */
+  border-radius: 4px;
 }
 
 /* ------------------- ЛИСТ ПЕРСОНАЖА (PAGE 3) - СТИЛЬ LSS ------------------- */
@@ -397,7 +392,6 @@ input, textarea {
 }
 
 .sheet-header {
-  /* Структура: [Контейнер Зображення] [Головна Інформація] */
   display: grid;
   grid-template-columns: 120px 1fr;
   align-items: flex-start;
@@ -428,9 +422,6 @@ input, textarea {
   height: 100%;
   object-fit: cover;
   display: block;
-}
-.header__image-container .header__image {
-  /* КНОПКА РЕДАГУВАННЯ ЗОБРАЖЕННЯ */
 }
 .header__image-container .header__image .btn--edit-image {
   position: absolute;
@@ -574,9 +565,6 @@ input, textarea {
 .column .textarea--short {
   min-height: 60px;
 }
-.column {
-  /* >>> КІНЕЦЬ СТИЛІВ TEXTAREA <<< */
-}
 .column .role-group {
   margin-bottom: 15px;
 }
@@ -613,7 +601,6 @@ input, textarea {
   margin-top: 4px;
 }
 
-/* ----- INSPIRATION BLOCK ----- */
 .stat-item--inspiration-top {
   display: flex;
   align-items: center;
@@ -636,7 +623,6 @@ input, textarea {
   font-weight: 600;
 }
 
-/* ------------------------------------ */
 .ability-scores {
   display: flex;
   flex-direction: column;
@@ -676,7 +662,7 @@ input, textarea {
   border: none;
   color: var(--text);
 }
-.ability-score .ability-score__modifier > div { /* Модифікатор (+2) */
+.ability-score .ability-score__modifier > div {
   font-size: 18px;
   font-weight: 700;
   color: var(--accent);
@@ -692,7 +678,6 @@ input, textarea {
   border-top: 1px dashed var(--border);
 }
 
-/* Стилі для Навичок/Спасбросків */
 .save-throw, .skill-row {
   display: flex;
   align-items: center;
@@ -825,7 +810,6 @@ input, textarea {
 }
 .weapons-table table td {
   padding: 2px 5px;
-  /* Додаємо відносне позиціонування для кнопки видалення */
   position: relative;
   border-bottom: 1px dashed rgba(var(--text-rgb), 0.1);
 }
@@ -841,21 +825,18 @@ input, textarea {
   font-weight: 700;
 }
 
-/* Кнопка "Додати зброю" - ЗЕЛЕНИЙ КОЛІР (ФІКСАЦІЯ) */
 .weapons-table .btn--add-weapon {
-  /* Наслідуємо стилі .btn, щоб мати фоновий колір */
   display: block;
   width: 100%;
   padding: 8px;
   margin-top: 10px;
-  background: var(--success); /* Зелений колір */
+  background: var(--success);
   color: white;
   border: 1px solid var(--success);
   border-radius: 4px;
   cursor: pointer;
   font-weight: 600;
   transition: background-color 0.2s;
-  /* Скидаємо стилі .btn для цієї кнопки, щоб вона була повністю зеленою */
   background: var(--success);
   border-color: var(--success);
 }
@@ -865,26 +846,23 @@ input, textarea {
   border-color: var(--success-dark);
 }
 
-/* Кнопка видалення (X) - ЧЕРВОНИЙ КОЛІР */
 .weapons-table .btn--remove-weapon {
   position: absolute;
-  right: 5px; /* Невеликий відступ від краю */
+  right: 5px;
   top: 50%;
   transform: translateY(-50%);
-  /* Менші, округліші розміри */
   width: 18px;
   height: 18px;
-  border-radius: 20%; /* Округлення */
+  border-radius: 20%;
   background: var(--danger);
   color: white;
   border: none;
   cursor: pointer;
-  font-size: 12px; /* Менший шрифт */
+  font-size: 12px;
   font-weight: 700;
   line-height: 1;
   opacity: 0.8;
   transition: opacity 0.2s, background-color 0.2s;
-  /* Центруємо текст 'X' */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -892,10 +870,9 @@ input, textarea {
 
 .weapons-table .btn--remove-weapon:hover {
   opacity: 1;
-  background: #c9304c; /* Темніший червоний для hover */
+  background: #c9304c;
 }
 
-/* Стилі для блоку капіталу */
 .money-block {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
